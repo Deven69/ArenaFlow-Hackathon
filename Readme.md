@@ -24,14 +24,21 @@ ArenaFlow is an automated ticket analysis and smart gate routing Progressive Web
 
 ---
 
-## 🛠 Tech Stack
+## 🛠 Google Services & APIs Used
 
+* **Google Cloud Run** `asia-south1` (Hosting the NGINX & Dockerized Frontend)
+* **Google Cloud Build** (Automated Container CI/CD Pipeline)
+* **Google Gemini AI** (Smart OCR mapping for ticket details)
+* **Google Cloud Vision API** (Optical Character Recognition fallback fallback)
+* **Google Maps JS API Loader** (Dynamic "HypeCard" gate routing and GPS mapping)
+* **Google Analytics 4 (GA4)** (Event tracking for physical gate scans and traffic flows)
+* **Firebase Cloud Messaging (FCM)** (Proximity geofence nudges and notifications)
+
+---
+
+## 🛠 Other Tech Stack
 * **Frontend:** React, HTML5, Vanilla CSS, Vite, Radix UI 
 * **Backend:** Supabase (PostgreSQL, Edge Functions, Row Level Security)
-* **AI & Vision:** Google Gemini, Google Cloud Vision API
-* **Mapping:** Google Maps JS API Loader
-* **Infrastructure & Hosting:** Docker, NGINX, Google Cloud Run (`asia-south1`)
-* **Tracking & Deployment Tools:** Google Cloud Build, Google Analytics 4
 
 ---
 
