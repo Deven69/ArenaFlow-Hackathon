@@ -16,9 +16,16 @@ ArenaFlow deploys a decoupled, serverless strategy:
 
 ## Google Services Integration
 To elevate the smart elements of the platform, ArenaFlow heavily relies on Google's APIs:
-- **Google Gemini Vision API:** Validates digital ticketing via base64 image parsing, allowing smart extractions against forgery.
-- **Google Maps Distance Matrix API:** Dynamically informs fans of the optimal gate to use, predicting walk timings accurately.
-- **Google BigQuery:** Intercepts real-time check-in and routing signals for predictive crowd-management analytics, storing event data for downstream analysis.
+
+| Google Service | Where Used | Purpose |
+|----------------|------------|---------|
+| **Gemini Vision API** | `cloudflare / edge hooks` | Validates digital ticketing via base64 image parsing, allowing smart extractions against forgery. |
+| **BigQuery** | `supabase/functions/log-analytics` | Intercepts real-time check-in and routing signals for predictive crowd-management analytics, storing event data for downstream analysis. |
+| **Maps Distance Matrix API** | `supabase/functions/navigation-gate-times` | Dynamically informs fans of the optimal gate to use, predicting walk timings accurately. |
+| **Cloud Run** | `deployment` | Hosts backend analytics if migrated. |
+| **Cloud Functions** | `webhook intercepts` | Miscellaneous data hooks. |
+| **Firebase** | `auth` | Secondary auth provider and analytics bindings. |
+| **Google OAuth** | `login` | One-click entry to the application. |
 
 ## Installation Instructions
 Ensure Node.js and Docker are installed locally.
