@@ -63,6 +63,25 @@ Deno.serve(async (req) => {
       results.push(await res.json());
     }
 
+    // Fire-and-forget log to analytics
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    fetch(`${SUPABASE_URL}/functions/v1/log-analytics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        action: "nudge_events",
+        payload: {
+          recipients_count: users.length,
+          message_preview: message,
+          nudge_id: crypto.randomUUID()
+        }
+      })
+    }).catch(e => console.error("Analytics failure", e));
+
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

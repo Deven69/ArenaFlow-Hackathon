@@ -20,9 +20,13 @@ const CameraScanner = ({ isOpen, onClose, onScanComplete }: CameraScannerProps) 
           exit={{ opacity: 0 }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-4" role="status" aria-live="polite">
             <h2 className="font-display text-lg font-semibold text-foreground">Scan Ticket</h2>
-            <button onClick={onClose} className="w-10 h-10 rounded-full glass flex items-center justify-center">
+            <button 
+              onClick={onClose} 
+              aria-label="Close scanner"
+              className="w-10 h-10 rounded-full glass flex items-center justify-center focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <X className="w-5 h-5 text-foreground" />
             </button>
           </div>

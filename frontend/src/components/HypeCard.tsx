@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { MapPin, Utensils, Users, Sparkles } from 'lucide-react';
+import { MapPin, Utensils, Users, Sparkles, Navigation } from 'lucide-react';
 import { Loader } from "@googlemaps/js-api-loader";
 import { logEvent } from '@/lib/analytics';
 import './HypeCard.css';
@@ -15,6 +15,34 @@ interface HypeCardProps {
 
 const HypeCard: React.FC<HypeCardProps> = ({ ticket }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [gates, setGates] = useState<{gate: string, timeMins: number, method: string}[]>([]);
+  const [loadingGates, setLoadingGates] = useState(false);
+
+  React.useEffect(() => {
+    if (isFlipped && gates.length === 0) {
+      setLoadingGates(true);
+      fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://x.supabase.co'}/functions/v1/navigation-gate-times`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+        },
+        body: JSON.stringify({
+          fanLat: 19.0820, // Mock current fan GPS 
+          fanLng: 72.8270,
+          venueId: "arena_1"
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.gates) {
+          setGates(data.gates);
+        }
+      })
+      .catch(err => console.error("Gate fetch fail", err))
+      .finally(() => setLoadingGates(false));
+    }
+  }, [isFlipped, gates.length]);
 
   // Fallback demo data so the card renders even without a ticket prop
   const data = ticket ?? {
@@ -134,6 +162,7 @@ const HypeCard: React.FC<HypeCardProps> = ({ ticket }) => {
                       includeMargin={false}
                       bgColor="#ffffff"
                       fgColor="#0d1117"
+                      aria-label="Ticket QR code for entry"
                     />
                   </div>
                   <p className="font-mono text-[10px] text-yellow-400 tracking-[0.18em]">
@@ -158,35 +187,38 @@ const HypeCard: React.FC<HypeCardProps> = ({ ticket }) => {
                 </div>
 
                 {/* Actions */}
-                <div className="relative z-10 w-full flex gap-2">
-                  <button
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500/15 text-blue-300 border border-blue-400/25 text-xs font-bold hover:bg-blue-500/25 transition"
-                    onClick={async (e) => {
-                          e.stopPropagation();
-                          const loader = new Loader({
-                            apiKey: "MOCK_API_KEY_OR_PROCESS_ENV", 
-                            version: "weekly",
-                            libraries: ["places"]
-                          });
-                          logEvent("navigate", "view_directions");
-                          try {
-                              await loader.importLibrary('routes');
-                              alert("Fetching dynamic walking directions via Google Maps API...");
-                          } catch (err) {
-                              console.error("Maps integration pending API KEY:", err);
-                          }
-                    }}
-                  >
-                    <MapPin className="w-3.5 h-3.5" />
-                    Navigate
-                  </button>
-                  <button
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-yellow-500/15 text-yellow-300 border border-yellow-400/25 text-xs font-bold hover:bg-yellow-500/25 transition"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Utensils className="w-3.5 h-3.5" />
-                    Order Food
-                  </button>
+                <div className="relative z-10 w-full flex flex-col gap-2">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-32 overflow-y-auto">
+                     <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-white/80">
+                        <Navigation className="w-3.5 h-3.5 text-primary" />
+                        Gate Navigation Options
+                     </div>
+                     {loadingGates ? (
+                        <div className="text-[10px] text-white/50 text-center py-2 animate-pulse">Calculating optimal routes...</div>
+                     ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {gates.map((g, i) => (
+                             <button
+                               key={i}
+                               className="flex flex-col items-start gap-0.5 p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition border border-blue-400/20 text-left"
+                               onClick={(e) => { e.stopPropagation(); logEvent("navigate", `gate_${g.gate}`); }}
+                             >
+                                <span className="text-white text-[11px] font-bold">{g.gate}</span>
+                                <span className="text-blue-300 text-[10px] whitespace-nowrap">{g.timeMins} min walk</span>
+                             </button>
+                          ))}
+                        </div>
+                     )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-yellow-500/15 text-yellow-300 border border-yellow-400/25 text-xs font-bold hover:bg-yellow-500/25 transition"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Utensils className="w-3.5 h-3.5" />
+                      Order Food
+                    </button>
+                  </div>
                 </div>
 
                 <button

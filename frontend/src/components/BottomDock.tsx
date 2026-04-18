@@ -24,8 +24,9 @@ const BottomDock = ({ activeTab, onTabChange }: BottomDockProps) => {
           return (
             <button
               key={id}
+              aria-label={`Navigation tab: ${label}`}
               onClick={() => onTabChange(id)}
-              className="relative flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-colors"
+              className="relative flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             >
               {isActive && (
                 <motion.div

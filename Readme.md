@@ -1,48 +1,49 @@
 # ArenaFlow
 
-### Live Application
-**[ArenaFlow Production Link](https://arenaflow-frontend-370329814886.asia-south1.run.app)**
+### The Intelligent Event Companion
 
-## Overview
-ArenaFlow is an automated ticket analysis and smart gate routing Progressive Web Application (PWA). Designed for live stadium environments, it effortlessly bridges the gap between chaotic ticket entrances and automated crowd control—getting fans to their exact seats via the fastest possible physical route using cutting edge dynamic APIs.
+## Project Overview
+ArenaFlow is a Progressive Web Application (PWA) designed to transform the live stadium experience for premier sporting events like the Indian Premier League (IPL) and Pro Kabaddi in Mumbai. Recognizing the chaotic nature of massive gatherings, ArenaFlow simplifies crowd management through intelligent digitisation. Built using React, Vite, and Supabase, it leverages cutting-edge backend logic driven by Edge Functions.
 
----
+## Problem Statement
+High-density events in Mumbai (e.g., IPL matches at Wankhede Stadium) currently suffer from severe congestion, long physical queues, confusing navigation, and delayed communication. Fans face slow physical ticket verification, unpredictable food queue times, and inadequate group check-in strategies. Security and staff members also lack real-time digital oversight to manage crowds effectively.
 
-## 🚀 Key Features
+## Solution Architecture
+ArenaFlow deploys a decoupled, serverless strategy:
+- **Frontend Layer:** React, Vite, Tailwind CSS, providing a high-performance PWA for immediate use without App Store friction. Housed inside an NGINX container.
+- **Backend Logic Layer:** Serverless Edge Functions (via Supabase) handling everything from Group Check-ins to Google Cloud data integration safely hiding credentials.
+- **Database Layer:** Supabase unified PostgreSQL schema, maintaining tickets, groups, gates, and statuses.
 
-* **Intelligent Ticket Scanner (OCR):**
-  A layered visual processor that pipelines physical ticket passes using both **Google Cloud Vision API** (as a rigorous text fallback) and **Google Gemini** to effortlessly extract Seat, Block, Level, and Gate numbers regardless of lighting conditions or ticket condition.
-  
-* **Dynamic Smart Gate Routing UI (HypeCard):**
-  Instead of static text maps, fans receive a dynamic "HypeCard" digital pass. Behind the scenes, it utilizes the **Google Maps JS API** to physically direct the user from their current GPS location to the precise stadium wing and entry gate.
+## Google Services Integration
+To elevate the smart elements of the platform, ArenaFlow heavily relies on Google's APIs:
+- **Google Gemini Vision API:** Validates digital ticketing via base64 image parsing, allowing smart extractions against forgery.
+- **Google Maps Distance Matrix API:** Dynamically informs fans of the optimal gate to use, predicting walk timings accurately.
+- **Google BigQuery:** Intercepts real-time check-in and routing signals for predictive crowd-management analytics, storing event data for downstream analysis.
 
-* **Real-time Push Nudging:**
-  Leveraging **Firebase Cloud Messaging (FCM)** and Supabase Edge functions to orchestrate proximity-based messaging. If a user wanders to the wrong gate within the stadium geofence, nudges execute locally.
+## Installation Instructions
+Ensure Node.js and Docker are installed locally.
 
-* **Smart Dashboards & Traffic Tracking:**
-  Fully instrumented frontend with **Google Analytics 4 (GA4)** custom event tracking mapping ticket scan volume per minute and physical footprint traffic flows, alongside automated Supabase database ingestion models.
+1. Install Frontend Dependencies:
+```bash
+cd frontend
+npm install
+```
 
----
+2. Configure environment overrides:
+Add the following to a `.env.local` inside the frontend directory:
+```
+VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_GEMINI_API_KEY=YOUR_GEMINI_KEY
+VITE_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_KEY
+```
 
-## 🛠 Google Services & APIs Used
+3. Local Boot:
+```bash
+npm run dev
+```
 
-* **Google Cloud Run** `asia-south1` (Hosting the NGINX & Dockerized Frontend)
-* **Google Cloud Build** (Automated Container CI/CD Pipeline)
-* **Google Gemini AI** (Smart OCR mapping for ticket details)
-* **Google Cloud Vision API** (Optical Character Recognition fallback fallback)
-* **Google Maps JS API Loader** (Dynamic "HypeCard" gate routing and GPS mapping)
-* **Google Analytics 4 (GA4)** (Event tracking for physical gate scans and traffic flows)
-* **Firebase Cloud Messaging (FCM)** (Proximity geofence nudges and notifications)
-
----
-
-## 🛠 Other Tech Stack
-* **Frontend:** React, HTML5, Vanilla CSS, Vite, Radix UI 
-* **Backend:** Supabase (PostgreSQL, Edge Functions, Row Level Security)
-
----
-
-## Hackathon Judging Information
-* **Region Deployed:** `asia-south1`
-* **Google Cloud Project ID:** `virtualpromptwars-devn`
-* **Architecture:** The platform is configured as a fully static React-Vite output deployed containerized via Docker and NGINX on **Google Cloud Run**. The container natively proxies interactions asynchronously into edge compute runtimes to preserve lightning fast front-end rendering speeds without heavy module bloat tying up client bandwidth.
+4. Complete Testing Suite:
+```bash
+npm run test:coverage
+```

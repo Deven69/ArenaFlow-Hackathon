@@ -1,0 +1,22 @@
+
+[functions.log-analytics]
+enabled = true
+verify_jwt = true
+import_map = "./functions/log-analytics/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/log-analytics/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/log-analytics/*.html" ]
+
+[functions.navigation-gate-times]
+enabled = true
+verify_jwt = true
+import_map = "./functions/navigation-gate-times/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/navigation-gate-times/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/navigation-gate-times/*.html" ]
