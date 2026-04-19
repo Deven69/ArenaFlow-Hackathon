@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Users, CheckCircle, Shield, ArrowLeft, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { queueCheckinForSync } from '../lib/offlineCheckin';
 
 interface StaffViewProps {
   onExit?: () => void;
@@ -115,7 +117,14 @@ const StaffView = ({ onExit }: StaffViewProps) => {
             </div>
 
             <button
-              onClick={() => {
+              onClick={async () => {
+                const scannedQrValue = 'TKT-2024-FINALE-001';
+                if (!navigator.onLine) {
+                  const token = (await supabase.auth.getSession()).data.session?.access_token ?? '';
+                  await queueCheckinForSync(scannedQrValue, token);
+                  setScanResult(false);
+                  return;
+                }
                 setScanResult(false);
                 import('@/lib/accessibility').then(({ announceToScreenReader }) => {
                   const count = 3;

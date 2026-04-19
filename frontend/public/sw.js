@@ -90,3 +90,52 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 });
+
+// IndexedDB helper
+function openCheckinDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('arenaflow-offline', 1);
+    req.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore('checkin-queue', 
+        { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = reject;
+  });
+}
+
+// Background sync handler
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'checkin-sync') {
+    event.waitUntil((async () => {
+      const db = await openCheckinDB();
+      const tx = db.transaction('checkin-queue', 'readwrite');
+      const store = tx.objectStore('checkin-queue');
+      const pending = await new Promise((res) => {
+        const req = store.getAll();
+        req.onsuccess = () => res(req.result);
+      });
+      for (const item of pending) {
+        try {
+          const response = await fetch(
+            `${self.location.origin}/functions/v1/checkin-single`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${item.token}`
+              },
+              body: JSON.stringify({ qrValue: item.qrValue })
+            }
+          );
+          if (response.ok) {
+            const deleteTx = db.transaction('checkin-queue', 'readwrite');
+            deleteTx.objectStore('checkin-queue').delete(item.id);
+          }
+        } catch {
+          // Will retry on next sync event
+        }
+      }
+    })());
+  }
+});
