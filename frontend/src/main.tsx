@@ -5,4 +5,8 @@ import { initGA } from "./lib/analytics";
 
 initGA();
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 createRoot(document.getElementById("root")!).render(<App />);

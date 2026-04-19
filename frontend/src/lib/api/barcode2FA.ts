@@ -5,7 +5,7 @@ export interface Barcode2FAResult {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
 }
 

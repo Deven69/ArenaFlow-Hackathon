@@ -27,7 +27,7 @@ describe('StaffView', () => {
     const mockOnExit = vi.fn();
     render(<StaffView onExit={mockOnExit} />);
     
-    const exitButton = screen.getByRole('button', { name: '' }); 
+    const exitButton = screen.getByRole('button', { name: 'Exit staff view' }); 
     // Assuming the exit button is the first button without absolute text, we can just trigger it 
     // Wait, let's just trigger the SCAN button.
     const scanButton = screen.getByText('SCAN TICKET').closest('button');

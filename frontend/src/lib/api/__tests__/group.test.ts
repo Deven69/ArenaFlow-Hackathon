@@ -1,4 +1,26 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+vi.mock('@/lib/supabase', () => {
+  const eqMock: any = vi.fn();
+  eqMock.mockImplementation(() => ({
+    eq: eqMock,
+    single: vi.fn().mockResolvedValue({ data: { role: 'staff', owner_id: 'test-user-id' } })
+  }));
+
+  return {
+    supabase: {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user-id' } } })
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: eqMock
+        })
+      })
+    }
+  };
+});
+
 import { createGroup, TIER_LIMITS } from "../group";
 import type { Ticket } from "@/data/mockData";
 

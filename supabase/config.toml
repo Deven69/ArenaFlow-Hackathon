@@ -20,3 +20,9 @@ entrypoint = "./functions/navigation-gate-times/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/navigation-gate-times/*.html" ]
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "https://your-project.supabase.co/auth/v1/callback"

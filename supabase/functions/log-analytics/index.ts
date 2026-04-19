@@ -1,5 +1,42 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { BigQuery } from "npm:@google-cloud/bigquery";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+// Helper for GCP structured logging
+async function logToGoogleCloud(functionName: string, eventDesc: string) {
+  try {
+    const loggingKey = Deno.env.get('GOOGLE_LOGGING_KEY');
+    const projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
+    if (loggingKey && projectId) {
+      await fetch(`https://logging.googleapis.com/v2/entries:write?key=${loggingKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          logName: `projects/${projectId}/logs/arenaflow`,
+          resource: { type: 'cloud_run_revision' },
+          entries: [{
+            severity: 'INFO',
+            jsonPayload: { function: functionName, event: eventDesc, timestamp: new Date().toISOString() }
+          }]
+        })
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+// AES-256-GCM encryption helper
+async function encryptField(plaintext: string, keyString: string): Promise<string> {
+  const keyBytes = new TextEncoder().encode(keyString.padEnd(32, '0').slice(0, 32));
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  return btoa(String.fromCharCode(...combined));
+}
 
 // Helper function to hash fan_id
 async function hashStringToSha256(text: string): Promise<string> {
@@ -15,7 +52,7 @@ if (Deno.env.get("GOOGLE_CLOUD_CREDENTIALS")) {
   try {
      bqConfig.credentials = JSON.parse(Deno.env.get("GOOGLE_CLOUD_CREDENTIALS") as string);
   } catch (e) {
-     console.error("Failed to parse GOOGLE_CLOUD_CREDENTIALS");
+     logToGoogleCloud('log-analytics', "Failed to parse GOOGLE_CLOUD_CREDENTIALS");
   }
 }
 if (Deno.env.get("GOOGLE_CLOUD_PROJECT_ID")) {
@@ -34,6 +71,29 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const clientIP = req.headers.get('x-forwarded-for') ?? 'unknown';
+    const ipHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clientIP));
+    const ipHashHex = Array.from(new Uint8Array(ipHash)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const { data: limitData } = await supabaseAdmin
+      .from('rate_limits')
+      .select('count')
+      .eq('ip_hash', ipHashHex)
+      .eq('function_name', 'log-analytics')
+      .gte('window_start', new Date(Date.now() - 60000).toISOString())
+      .single();
+
+    const count = limitData?.count;
+    if (count && count > 100) {
+      return new Response(JSON.stringify({ error: 'RATE_LIMITED', message: 'Too many requests' }), 
+        { status: 429, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { action, payload } = await req.json();
 
     if (!action || !payload) {
@@ -41,22 +101,21 @@ Deno.serve(async (req) => {
     }
 
     const dataset = bigquery.dataset("arenaflow_analytics");
+    await logToGoogleCloud('log-analytics', `Processing action: ${action}`);
 
     if (action === "checkin_events") {
       const {
-        event_id,
-        venue_id,
-        gate_id,
-        gate_name,
-        ticket_tier,
-        is_group_checkin,
-        group_size,
-        fan_id, // We will hash this
-        session_id,
-        time_to_checkin_seconds
+        event_id, venue_id, gate_id, gate_name,
+        ticket_tier, is_group_checkin, group_size,
+        fan_id, session_id, time_to_checkin_seconds
       } = payload;
 
-      const fan_id_hash = fan_id ? await hashStringToSha256(fan_id) : "";
+      let fan_id_hash = fan_id ? await hashStringToSha256(fan_id) : "";
+      
+      const encKey = Deno.env.get('ENCRYPTION_KEY');
+      if (encKey && fan_id_hash) {
+        fan_id_hash = await encryptField(fan_id_hash, encKey);
+      }
 
       const row = {
         event_id: event_id || "default_event",
@@ -73,16 +132,40 @@ Deno.serve(async (req) => {
       };
 
       await dataset.table("checkin_events").insert([row]);
+      await logToGoogleCloud('log-analytics', "Successfully inserted checkin_events row");
     } else if (action === "nudge_events") {
       const {
-        nudge_id,
-        venue_id,
-        gate_id,
-        recipients_count,
-        gemini_latency_ms,
-        maps_latency_ms,
-        message_preview
+        nudge_id, venue_id, gate_id,
+        recipients_count, gemini_latency_ms,
+        maps_latency_ms, message_preview
       } = payload;
+      
+      let sentiment_score = null;
+      let sentiment_magnitude = null;
+      
+      const nlpApiKey = Deno.env.get('GOOGLE_NLP_API_KEY');
+      if (nlpApiKey && message_preview) {
+        try {
+          await logToGoogleCloud('log-analytics', "Calling Natural Language API for sentiment");
+          const nlpRes = await fetch(`https://language.googleapis.com/v1/documents:analyzeSentiment?key=${nlpApiKey}`, {
+            method: 'POST',
+            body: JSON.stringify({
+              document: { type: 'PLAIN_TEXT', content: message_preview },
+              encodingType: 'UTF8'
+            })
+          });
+          if (nlpRes.ok) {
+            const nlpData = await nlpRes.json();
+            sentiment_score = nlpData?.documentSentiment?.score ?? null;
+            sentiment_magnitude = nlpData?.documentSentiment?.magnitude ?? null;
+            await logToGoogleCloud('log-analytics', "Successfully retrieved sentiment score");
+          } else {
+            await logToGoogleCloud('log-analytics', `Natural Language API failed: ${nlpRes.status}`);
+          }
+        } catch (nlpErr: any) {
+          await logToGoogleCloud('log-analytics', `Natural Language API error: ${nlpErr.message}`);
+        }
+      }
 
       const row = {
         nudge_id: nudge_id || crypto.randomUUID(),
@@ -92,10 +175,13 @@ Deno.serve(async (req) => {
         gemini_latency_ms: Number(gemini_latency_ms) || 0,
         maps_latency_ms: Number(maps_latency_ms) || 0,
         sent_timestamp: new Date().toISOString(),
-        message_preview: message_preview ? message_preview.substring(0, 50) : ""
+        message_preview: message_preview ? message_preview.substring(0, 50) : "",
+        sentiment_score,
+        sentiment_magnitude
       };
 
       await dataset.table("nudge_events").insert([row]);
+      await logToGoogleCloud('log-analytics', "Successfully inserted nudge_events row");
     } else {
        throw new Error(`Unknown action: ${action}`);
     }
@@ -105,7 +191,7 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (error: any) {
-    console.error("BigQuery Log Error: ", error.message);
+    await logToGoogleCloud('log-analytics', `BigQuery Log Error: ${error.message}`);
     // Usually we don't want analytics to block user flow if this fails
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

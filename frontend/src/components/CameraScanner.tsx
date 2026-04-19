@@ -60,6 +60,9 @@ const CameraScanner = ({ isOpen, onClose, onScanComplete }: CameraScannerProps) 
               className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 glow-purple"
               whileTap={{ scale: 0.95 }}
               onClick={() => {
+                import('@/lib/accessibility').then(({ announceToScreenReader }) => {
+                  announceToScreenReader('Ticket scanned successfully. Your HypeCard is ready.');
+                });
                 logEvent("scan", "ticket_scanned");
                 onScanComplete();
               }}

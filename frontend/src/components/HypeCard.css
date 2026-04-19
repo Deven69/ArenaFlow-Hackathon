@@ -63,3 +63,15 @@
     opacity: 0;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-border-shell { animation: none; background: linear-gradient(135deg, #D4AF37, #FFD700); }
+  .shimmer-sweep::after { animation: none; }
+  .hype-card-scene { animation: none; }
+  .pkm-border { animation: none; }
+  .pkm-shimmer-sweep { animation: none; }
+  .card-shimmer-sweep::before { animation: none; filter: none; opacity: 0; }
+  .animate-scan-line { animation: none; opacity: 0; }
+  .animate-float-slow { animation: none; }
+  .animate-float-delayed { animation: none; }
+}

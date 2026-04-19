@@ -527,3 +527,13 @@
     width: 85vw;
   }
 }
+
+button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.inline-link { 
+  min-height: unset; 
+  min-width: unset; 
+}

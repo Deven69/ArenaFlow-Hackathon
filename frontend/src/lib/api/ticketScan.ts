@@ -18,7 +18,11 @@ export interface TicketScanResult {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: {
+      rawGeminiResponse?: string;
+      parseError?: string;
+      extractedFields?: Partial<TicketScanResult>;
+    };
   };
 }
 

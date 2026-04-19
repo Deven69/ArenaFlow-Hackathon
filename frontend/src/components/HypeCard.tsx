@@ -9,6 +9,42 @@ import matchPoster from '@/assets/updateimage.jpg';
 import captainPopout from '@/assets/captain-popout.png';
 import type { Ticket } from '@/data/mockData';
 
+const CACHE_KEY_PREFIX = 'arenaflow_gate_times_';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const fetchGateTimes = async (fanLat: number, fanLng: number, venueId: string) => {
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://x.supabase.co'}/functions/v1/navigation-gate-times`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+    },
+    body: JSON.stringify({ fanLat, fanLng, venueId })
+  });
+  return res.json();
+};
+
+const getGateTimes = async (fanLat: number, fanLng: number, venueId: string) => {
+  const latRound = fanLat.toFixed(3);
+  const lngRound = fanLng.toFixed(3);
+  const cacheKey = `${CACHE_KEY_PREFIX}${venueId}_${latRound}_${lngRound}`;
+  
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    const { data, timestamp } = JSON.parse(cached);
+    if (Date.now() - timestamp < CACHE_TTL_MS) {
+      return data;
+    }
+  }
+  
+  const result = await fetchGateTimes(fanLat, fanLng, venueId);
+  localStorage.setItem(cacheKey, JSON.stringify({ 
+    data: result, 
+    timestamp: Date.now() 
+  }));
+  return result;
+};
+
 interface HypeCardProps {
   ticket?: Ticket;
 }
@@ -18,22 +54,12 @@ const HypeCard: React.FC<HypeCardProps> = ({ ticket }) => {
   const [gates, setGates] = useState<{gate: string, timeMins: number, method: string}[]>([]);
   const [loadingGates, setLoadingGates] = useState(false);
 
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   React.useEffect(() => {
     if (isFlipped && gates.length === 0) {
       setLoadingGates(true);
-      fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://x.supabase.co'}/functions/v1/navigation-gate-times`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
-        },
-        body: JSON.stringify({
-          fanLat: 19.0820, // Mock current fan GPS 
-          fanLng: 72.8270,
-          venueId: "arena_1"
-        })
-      })
-      .then(res => res.json())
+      getGateTimes(19.0820, 72.8270, "arena_1")
       .then(data => {
         if (data.gates) {
           setGates(data.gates);
@@ -65,7 +91,7 @@ const HypeCard: React.FC<HypeCardProps> = ({ ticket }) => {
       <motion.div
         className="relative w-[340px] h-[460px]"
         style={{ perspective: 1400 }}
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         {/* Layer 1: Ambient glow behind everything */}
@@ -76,7 +102,11 @@ const HypeCard: React.FC<HypeCardProps> = ({ ticket }) => {
           className="relative w-full h-full cursor-pointer"
           style={{ transformStyle: 'preserve-3d' }}
           animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{ duration: 0.9, type: 'spring', stiffness: 60, damping: 14 }}
+          transition={{ 
+            duration: prefersReducedMotion ? 0 : 0.6, 
+            type: prefersReducedMotion ? 'tween' : 'spring',
+            stiffness: 60, damping: 14 
+          }}
           onClick={() => setIsFlipped((f) => !f)}
         >
           {/* ======================= FRONT ======================= */}

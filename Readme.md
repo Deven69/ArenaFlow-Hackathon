@@ -17,17 +17,29 @@ ArenaFlow deploys a decoupled, serverless strategy:
 ## Google Services Integration
 To elevate the smart elements of the platform, ArenaFlow heavily relies on Google's APIs:
 
-| Google Service | Where Used | Purpose |
-|----------------|------------|---------|
-| **Gemini Vision API** | `cloudflare / edge hooks` | Validates digital ticketing via base64 image parsing, allowing smart extractions against forgery. |
-| **BigQuery** | `supabase/functions/log-analytics` | Intercepts real-time check-in and routing signals for predictive crowd-management analytics, storing event data for downstream analysis. |
-| **Maps Distance Matrix API** | `supabase/functions/navigation-gate-times` | Dynamically informs fans of the optimal gate to use, predicting walk timings accurately. |
-| **Cloud Run** | `deployment` | Hosts backend analytics if migrated. |
-| **Cloud Functions** | `webhook intercepts` | Miscellaneous data hooks. |
-| **Firebase** | `auth` | Secondary auth provider and analytics bindings. |
-| **Google OAuth** | `login` | One-click entry to the application. |
+| # | Service | Where Used | Purpose |
+|---|---------|------------|---------|
+| 1 | Gemini Vision | `cloudflare / edge hooks` | Image parsing for tickets |
+| 2 | Gemini Text | `cloudflare / edge hooks` | LLM analysis |
+| 3 | Cloud Run | `deployment` | Hosts frontend / analytics |
+| 4 | Maps Distance Matrix | `supabase/functions/navigation-gate-times` | Map routing & predictions |
+| 5 | BigQuery | `supabase/functions/log-analytics` | Checkin & nudge events storage |
+| 6 | Cloud Translation | `supabase/functions/translate-nudge` | Translating prompt nudges into Hindi/Marathi/En |
+| 7 | Natural Language API | `supabase/functions/log-analytics` | NLP sentiment analysis on nudge logs |
+| 8 | Cloud Logging | `supabase/functions` | Structured edge function logging |
+| 9 | Google OAuth | `login` | Authentication |
+| 10| Firebase Cloud Messaging | `notifications` | Push notification delivery |
+| 11| Google Analytics 4 | `frontend` | Global tracking |
+| 12 | Firebase Cloud Messaging | `src/lib/notifications.ts` | Push notifications for gate nudges without requiring app open |
 
 ## Installation Instructions
+
+### Enabling Google OAuth
+1. Go to Supabase Dashboard → Authentication → Providers → Google
+2. Enable Google provider
+3. Add your Google OAuth Client ID and Secret
+4. Add authorized redirect URI in Google Console:
+   https://[your-project].supabase.co/auth/v1/callback
 Ensure Node.js and Docker are installed locally.
 
 1. Install Frontend Dependencies:

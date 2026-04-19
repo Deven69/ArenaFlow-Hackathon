@@ -5,10 +5,11 @@ import HypeCard from '@/components/HypeCard';
 import GhostCard from '@/components/GhostCard';
 import CameraScanner from '@/components/CameraScanner';
 import BottomDock, { type TabId } from '@/components/BottomDock';
-import ExploreHub from '@/components/ExploreHub';
-import FoodOrders from '@/components/FoodOrders';
-import ProfileView from '@/components/ProfileView';
-import StaffView from '@/components/StaffView';
+import { lazy, Suspense } from 'react';
+const ExploreHub = lazy(() => import('@/components/ExploreHub'));
+const FoodOrders = lazy(() => import('@/components/FoodOrders'));
+const ProfileView = lazy(() => import('@/components/ProfileView'));
+const StaffView = lazy(() => import('@/components/StaffView'));
 import { mockTicket } from '@/data/mockData';
 
 const Index = () => {
@@ -23,7 +24,15 @@ const Index = () => {
   }
 
   if (isStaffMode) {
-    return <StaffView onExit={() => setIsStaffMode(false)} />;
+    return (
+      <Suspense fallback={
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#05070F', color: '#D4AF37', fontFamily: 'Rajdhani, sans-serif', fontSize: '16px' }}>
+          Loading...
+        </div>
+      }>
+        <StaffView onExit={() => setIsStaffMode(false)} />
+      </Suspense>
+    );
   }
 
   const renderTab = () => {
@@ -133,11 +142,23 @@ const Index = () => {
           </div>
         );
       case 'explore':
-        return <ExploreHub />;
+        return (
+          <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#05070F', color: '#D4AF37', fontFamily: 'Rajdhani, sans-serif', fontSize: '16px' }}>Loading...</div>}>
+            <ExploreHub />
+          </Suspense>
+        );
       case 'food':
-        return <FoodOrders />;
+        return (
+          <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#05070F', color: '#D4AF37', fontFamily: 'Rajdhani, sans-serif', fontSize: '16px' }}>Loading...</div>}>
+            <FoodOrders />
+          </Suspense>
+        );
       case 'profile':
-        return <ProfileView />;
+        return (
+          <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#05070F', color: '#D4AF37', fontFamily: 'Rajdhani, sans-serif', fontSize: '16px' }}>Loading...</div>}>
+            <ProfileView />
+          </Suspense>
+        );
     }
   };
 

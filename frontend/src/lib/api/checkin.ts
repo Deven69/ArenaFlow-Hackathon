@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import type { Group } from './group';
 import type { Ticket } from '@/data/mockData';
-
+import { supabase } from '@/lib/supabase';
+import { ERRORS } from '@/lib/errors';
 export interface CheckInResult {
   success: boolean;
   checkedInTickets?: Array<{
@@ -11,7 +12,7 @@ export interface CheckInResult {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
 }
 
@@ -169,6 +170,32 @@ export async function checkInIndividualTicket(
         },
       },
     };
+  }
+
+  // BOLA prevention: verify the ticket belongs to the authenticated user
+  // OR the caller has staff/admin role
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw ERRORS.UNAUTHORIZED();
+
+  // Get caller role from profiles table
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  // Fans can only checkin their own ticket
+  // Staff and admin can checkin any ticket
+  if (profile?.role === 'fan') {
+    const { data: ticketOwner } = await supabase
+      .from('tickets')
+      .select('owner_id')
+      .eq('qr_value', ticket.qrCode || ticket.id)
+      .single();
+      
+    if (!ticketOwner || ticketOwner.owner_id !== user.id) {
+      throw ERRORS.UNAUTHORIZED();
+    }
   }
 
   const checkedInAt = new Date().toISOString();

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import type { Ticket } from '@/data/mockData';
+import { supabase } from '@/lib/supabase';
+import { ERRORS } from '@/lib/errors';
 
 export const TIER_LIMITS = {
   Standard: 8,
@@ -21,7 +23,7 @@ export interface GroupCreateResult {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
 }
 
@@ -88,7 +90,21 @@ export async function createGroup(
     seenIds.add(ticket.id);
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw ERRORS.UNAUTHORIZED();
+
   for (const ticket of tickets) {
+    const { data: ticketRecord } = await supabase
+      .from('tickets')
+      .select('owner_id, match_id')
+      .eq('id', ticket.id)
+      .eq('owner_id', user.id)  // BOLA: must match JWT user
+      .single();
+
+    if (!ticketRecord) {
+      throw ERRORS.UNAUTHORIZED();
+    }
+
     if ((ticket as { checkedIn?: boolean }).checkedIn) {
       return {
         success: false,

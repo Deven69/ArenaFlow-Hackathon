@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +32,29 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const clientIP = req.headers.get('x-forwarded-for') ?? 'unknown';
+    const ipHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clientIP));
+    const ipHashHex = Array.from(new Uint8Array(ipHash)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const { data: limitData } = await supabaseAdmin
+      .from('rate_limits')
+      .select('count')
+      .eq('ip_hash', ipHashHex)
+      .eq('function_name', 'navigation-gate-times')
+      .gte('window_start', new Date(Date.now() - 60000).toISOString())
+      .single();
+
+    const count = limitData?.count;
+    if (count && count > 100) {
+      return new Response(JSON.stringify({ error: 'RATE_LIMITED', message: 'Too many requests' }), 
+        { status: 429, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { fanLat, fanLng, venueId } = await req.json();
 
     if (fanLat === undefined || fanLng === undefined) {

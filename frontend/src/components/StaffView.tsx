@@ -21,7 +21,7 @@ const StaffView = ({ onExit }: StaffViewProps) => {
       <div className="relative flex items-center justify-between p-4 border-b" style={{ borderColor: 'hsl(120, 100%, 63%, 0.2)' }}>
         <div className="flex items-center gap-3">
           {onExit && (
-            <button onClick={onExit} className="mr-2">
+            <button onClick={onExit} className="mr-2" aria-label="Exit staff view">
               <ArrowLeft className="w-5 h-5" style={{ color: 'hsl(120, 100%, 63%)' }} />
             </button>
           )}
@@ -82,7 +82,7 @@ const StaffView = ({ onExit }: StaffViewProps) => {
                 <CheckCircle className="w-5 h-5" style={{ color: 'hsl(120, 100%, 63%)' }} />
                 <span className="font-mono font-bold text-sm tracking-wider" style={{ color: 'hsl(120, 100%, 63%)' }}>VERIFIED</span>
               </div>
-              <button onClick={() => setScanResult(false)}>
+              <button onClick={() => setScanResult(false)} aria-label="Close scan result">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
@@ -115,7 +115,13 @@ const StaffView = ({ onExit }: StaffViewProps) => {
             </div>
 
             <button
-              onClick={() => setScanResult(false)}
+              onClick={() => {
+                setScanResult(false);
+                import('@/lib/accessibility').then(({ announceToScreenReader }) => {
+                  const count = 3;
+                  announceToScreenReader(`Check-in complete. ${count} ticket${count > 1 ? 's' : ''} validated successfully.`);
+                });
+              }}
               className="w-full py-3.5 rounded-xl font-mono font-bold text-sm active:scale-95 transition-transform glow-green"
               style={{ background: 'hsl(120, 100%, 63%, 0.1)', color: 'hsl(120, 100%, 63%)', border: '1px solid hsl(120, 100%, 63%, 0.3)' }}
             >

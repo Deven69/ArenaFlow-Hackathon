@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">93.02% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>80/80</span>
+                <span class='fraction'>80/86</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">93.02% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>80/80</span>
+                <span class='fraction'>80/86</span>
             </div>
         
             
@@ -194,7 +194,13 @@
 <a name='L129'></a><a href='#L129'>129</a>
 <a name='L130'></a><a href='#L130'>130</a>
 <a name='L131'></a><a href='#L131'>131</a>
-<a name='L132'></a><a href='#L132'>132</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -312,6 +318,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
@@ -348,7 +360,7 @@ const StaffView = ({ onExit }: StaffViewProps) =&gt; {
       &lt;div className="relative flex items-center justify-between p-4 border-b" style={{ borderColor: 'hsl(120, 100%, 63%, 0.2)' }}&gt;
         &lt;div className="flex items-center gap-3"&gt;
           {onExit &amp;&amp; (
-            &lt;button onClick={onExit} className="mr-2"&gt;
+            &lt;button onClick={onExit} className="mr-2" aria-label="Exit staff view"&gt;
               &lt;ArrowLeft className="w-5 h-5" style={{ color: 'hsl(120, 100%, 63%)' }} /&gt;
             &lt;/button&gt;
           )}
@@ -409,7 +421,7 @@ const StaffView = ({ onExit }: StaffViewProps) =&gt; {
                 &lt;CheckCircle className="w-5 h-5" style={{ color: 'hsl(120, 100%, 63%)' }} /&gt;
                 &lt;span className="font-mono font-bold text-sm tracking-wider" style={{ color: 'hsl(120, 100%, 63%)' }}&gt;VERIFIED&lt;/span&gt;
               &lt;/div&gt;
-              &lt;button onClick={<span class="fstat-no" title="function not covered" >() =&gt; setScanResult(false)}&gt;</span>
+              &lt;button onClick={<span class="fstat-no" title="function not covered" >() =&gt; setScanResult(false)} a</span>ria-label="Close scan result"&gt;
                 &lt;X className="w-5 h-5 text-muted-foreground" /&gt;
               &lt;/button&gt;
             &lt;/div&gt;
@@ -442,7 +454,13 @@ const StaffView = ({ onExit }: StaffViewProps) =&gt; {
             &lt;/div&gt;
 &nbsp;
             &lt;button
-              onClick={<span class="fstat-no" title="function not covered" >() =&gt; setScanResult(false)}</span>
+              onClick={<span class="fstat-no" title="function not covered" >() =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >                setScanResult(false);</span>
+<span class="cstat-no" title="statement not covered" >                import('@/lib/accessibility').then(({ announceToScreenReader }) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >                  const count = 3;</span>
+<span class="cstat-no" title="statement not covered" >                  announceToScreenReader(`Check-in complete. ${count} ticket${count &gt; 1 ? 's' : ''} validated successfully.`);</span>
+<span class="cstat-no" title="statement not covered" >                });</span>
+<span class="cstat-no" title="statement not covered" >              }}</span>
               className="w-full py-3.5 rounded-xl font-mono font-bold text-sm active:scale-95 transition-transform glow-green"
               style={{ background: 'hsl(120, 100%, 63%, 0.1)', color: 'hsl(120, 100%, 63%)', border: '1px solid hsl(120, 100%, 63%, 0.3)' }}
             &gt;
@@ -463,7 +481,7 @@ export default StaffView;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-18T13:51:27.574Z
+                at 2026-04-19T10:47:27.996Z
             </div>
         <script src="../prettify.js"></script>
         <script>
